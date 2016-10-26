@@ -1,4 +1,3 @@
-/// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -172,7 +171,7 @@ void AP_AHRS_NavEKF::update_EKF1(void)
                     accel.z -= abias2;
                 }
                 if (_ins.get_accel_health(i)) {
-                    _accel_ef_ekf[i] = _dcm_matrix * accel;
+                    _accel_ef_ekf[i] = _dcm_matrix * get_rotation_autopilot_body_to_vehicle_body() * accel;
                 }
             }
 
@@ -244,7 +243,7 @@ void AP_AHRS_NavEKF::update_EKF2(void)
                     accel.z -= abias;
                 }
                 if (_ins.get_accel_health(i)) {
-                    _accel_ef_ekf[i] = _dcm_matrix * accel;
+                    _accel_ef_ekf[i] = _dcm_matrix * get_rotation_autopilot_body_to_vehicle_body() * accel;
                 }
             }
             _accel_ef_ekf_blended = _accel_ef_ekf[primary_imu>=0?primary_imu:_ins.get_primary_accel()];
@@ -1106,6 +1105,24 @@ bool AP_AHRS_NavEKF::getMagOffsets(uint8_t mag_idx, Vector3f &magOffsets)
         magOffsets.zero();
         return true;
 #endif
+    }
+}
+
+// Retrieves the NED delta velocity corrected
+void AP_AHRS_NavEKF::getCorrectedDeltaVelocityNED(Vector3f& ret, float& dt) const
+{
+    if (ekf_type() == 2) {
+        uint8_t imu_idx = EKF2.getPrimaryCoreIMUIndex();
+        float accel_z_bias;
+        EKF2.getAccelZBias(-1,accel_z_bias);
+        ret.zero();
+        _ins.get_delta_velocity(imu_idx, ret);
+        dt = _ins.get_delta_velocity_dt(imu_idx);
+        ret.z -= accel_z_bias*dt;
+        ret = _dcm_matrix * get_rotation_autopilot_body_to_vehicle_body() * ret;
+        ret.z += GRAVITY_MSS*dt;
+    } else {
+        AP_AHRS::getCorrectedDeltaVelocityNED(ret, dt);
     }
 }
 

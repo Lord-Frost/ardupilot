@@ -1,5 +1,3 @@
-// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-
 #include "Plane.h"
 
 // set the nav_controller pointer to the right controller
@@ -63,7 +61,7 @@ void Plane::navigate()
         return;
     }
 
-    if (next_WP_loc.lat == 0) {
+    if (next_WP_loc.lat == 0 && next_WP_loc.lng == 0) {
         return;
     }
 

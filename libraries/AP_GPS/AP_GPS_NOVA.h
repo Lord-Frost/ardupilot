@@ -1,4 +1,3 @@
-// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +32,7 @@ public:
     // Methods
     bool read();
 
-    void inject_data(uint8_t *data, uint8_t len);
+    void inject_data(const uint8_t *data, uint16_t len) override;
 
 private:
 
@@ -64,10 +63,8 @@ private:
         "log psrdopb\r\n" // poll message, as dop only changes when a sat is dropped/added to the visible list
     };
    
-    uint32_t last_hdop = 999;
     uint32_t crc_error_counter = 0;
     uint32_t last_injected_data_ms = 0;
-    bool validcommand = false;
 
     struct PACKED nova_header
     {

@@ -330,9 +330,13 @@ _options_for_frame = {
         "default_params_filename": "default_params/rover-skid.parm",
     },
     # SIM
-    "Gazebo": {
+    "gazebo-iris": {
         "waf_target": "bin/arducopter-quad",
-        "default_params_filename": "default_params/copter.parm",
+        "default_params_filename": "default_params/gazebo-iris.parm",
+    },
+    "gazebo-zephyr": {
+        "waf_target": "bin/arduplane",
+        "default_params_filename": "default_params/gazebo-zephyr.parm",
     },
     "last_letter": {
         "waf_target": "bin/arduplane",
@@ -365,7 +369,7 @@ def options_for_frame(frame, vehicle, opts):
     if frame in _options_for_frame:
         ret = _options_for_frame[frame]
     else:
-        for p in ["octa", "tri", "y6", "firefly", "heli", "last_letter", "jsbsim", "quadplane", "plane-elevon", "plane-vtail", "plane"]:
+        for p in ["octa", "tri", "y6", "firefly", "heli", "gazebo", "last_letter", "jsbsim", "quadplane", "plane-elevon", "plane-vtail", "plane"]:
             if frame.startswith(p):
                 ret = _options_for_frame[p]
                 break
@@ -615,10 +619,12 @@ def start_mavproxy(opts, stuff):
             cmd.extend(["--sitl", simout_port])
 
     # If running inside of a vagrant guest, then we probably want to forward our mavlink out to the containing host OS
-    if getpass.getuser() == "vagrant":
-        cmd.extend(["--out", "10.0.2.2:14550"])
-    for port in [14550, 14551]:
-        cmd.extend(["--out", "127.0.0.1:" + str(port)])
+    ports = [p + 10 * cmd_opts.instance for p in [14550,14551]]
+    for port in ports:
+        if getpass.getuser() == "vagrant":
+            cmd.extend(["--out", "10.0.2.2:" + str(port)])
+        else:
+            cmd.extend(["--out", "127.0.0.1:" + str(port)])
 
     if opts.tracker:
         cmd.extend(["--load-module", "tracker"])
@@ -680,7 +686,7 @@ group_build.add_option("-c", "--clean", action='store_true', default=False, help
 group_build.add_option("-j", "--jobs", default=None, type='int', help="number of processors to use during build (default for waf : number of processor, for make : 1)")
 group_build.add_option("-b", "--build-target", default=None, type='string', help="override SITL build target")
 group_build.add_option("-s", "--build-system", default="waf", type='choice', choices=["make", "waf"], help="build system to use")
-group_build.add_option("", "--no-rebuild-on-failure", dest="rebuild_on_failure", action='store_false', default=True, help="if build fails, do not clean and rebuild")
+group_build.add_option("", "--rebuild-on-failure", dest="rebuild_on_failure", action='store_true', default=False, help="if build fails, do not clean and rebuild")
 group_build.add_option("", "--waf-configure-arg", action="append", dest="waf_configure_args", type="string", default=[], help="extra arguments to pass to waf in its configure step")
 group_build.add_option("", "--waf-build-arg", action="append", dest="waf_build_args", type="string", default=[], help="extra arguments to pass to waf in its build step")
 parser.add_option_group(group_build)

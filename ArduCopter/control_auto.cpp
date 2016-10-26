@@ -1,5 +1,3 @@
-/// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-
 #include "Copter.h"
 
 /*
@@ -361,8 +359,10 @@ void Copter::auto_land_start(const Vector3f& destination)
     wp_nav.init_loiter_target(destination);
 
     // initialise position and desired velocity
-    pos_control.set_alt_target(inertial_nav.get_altitude());
-    pos_control.set_desired_velocity_z(inertial_nav.get_velocity_z());
+    if (!pos_control.is_active_z()) {
+        pos_control.set_alt_target(inertial_nav.get_altitude());
+        pos_control.set_desired_velocity_z(inertial_nav.get_velocity_z());
+    }
 
     // initialise yaw
     set_auto_yaw_mode(AUTO_YAW_HOLD);
@@ -580,7 +580,6 @@ uint8_t Copter::get_default_auto_yaw_mode(bool rtl)
 
         case WP_YAW_BEHAVIOR_NONE:
             return AUTO_YAW_HOLD;
-            break;
 
         case WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL:
             if (rtl) {
@@ -588,16 +587,13 @@ uint8_t Copter::get_default_auto_yaw_mode(bool rtl)
             }else{
                 return AUTO_YAW_LOOK_AT_NEXT_WP;
             }
-            break;
 
         case WP_YAW_BEHAVIOR_LOOK_AHEAD:
             return AUTO_YAW_LOOK_AHEAD;
-            break;
 
         case WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP:
         default:
             return AUTO_YAW_LOOK_AT_NEXT_WP;
-            break;
     }
 }
 
@@ -717,29 +713,24 @@ float Copter::get_auto_heading(void)
     case AUTO_YAW_ROI:
         // point towards a location held in roi_WP
         return get_roi_yaw();
-        break;
 
     case AUTO_YAW_LOOK_AT_HEADING:
         // keep heading pointing in the direction held in yaw_look_at_heading with no pilot input allowed
         return yaw_look_at_heading;
-        break;
 
     case AUTO_YAW_LOOK_AHEAD:
         // Commanded Yaw to automatically look ahead.
         return get_look_ahead_yaw();
-        break;
 
     case AUTO_YAW_RESETTOARMEDYAW:
         // changes yaw to be same as when quad was armed
         return initial_armed_bearing;
-        break;
 
     case AUTO_YAW_LOOK_AT_NEXT_WP:
     default:
         // point towards next waypoint.
         // we don't use wp_bearing because we don't want the copter to turn too much during flight
         return wp_nav.get_yaw();
-        break;
     }
 }
 
